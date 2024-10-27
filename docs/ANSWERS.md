@@ -213,13 +213,6 @@ Chaque document représente une playlist créée ou générée automatiquement.
 - `created_at` : Date de création de la playlist.
 - `updated_at` : Dernière date de mise à jour de la playlist.
 
-![Présentation Visuelle de la BD](../images/ERD.png)
-
-> **Note**:  
-> Ce schéma est créé pour visualiser la structure de notre base de données NoSQL dans MongoDB, bien qu’il ne représente pas une base SQL classique avec des clés primaires et étrangères.  
-> Les collections _Tracks_, _Users_, _ListenHistory_, et _Playlists_ sont structurées pour optimiser la flexibilité et l’efficacité de la récupération des données dans MongoDB.  
-> Les références (`user_id`, `track_id`) sont logiques et non strictement appliquées comme dans les bases SQL, permettant une gestion plus dynamique des relations entre les documents sans contraintes imposées.
-
 </div>
 
 <div style="width: 48%; padding-left: 2%;">
@@ -273,6 +266,18 @@ Ce schéma maximise la performance et l'adaptabilité tout en conservant une str
 </div>
 
 </div>
+
+---
+
+<div align="center">
+  <img src="../images/ERD.png" alt="Photo de la Présentation Visuelle de la BD" width="300">
+  <h4>Diagramme 1: Présentation Visuelle de la BD</h4>
+</div>
+
+> **Note**:  
+> Ce schéma est créé pour visualiser la structure de notre base de données NoSQL dans MongoDB, bien qu’il ne représente pas une base SQL classique avec des clés primaires et étrangères.  
+> Les collections _Tracks_, _Users_, _ListenHistory_, et _Playlists_ sont structurées pour optimiser la flexibilité et l’efficacité de la récupération des données dans MongoDB.  
+> Les références (`user_id`, `track_id`) sont logiques et non strictement appliquées comme dans les bases SQL, permettant une gestion plus dynamique des relations entre les documents sans contraintes imposées.
 
 ---
 
@@ -347,6 +352,11 @@ Pour automatiser les calculs quotidiens de recommandations pour les playlists pe
 - Intégrer un framework de tests A/B pour expérimenter avec différents algorithmes de recommandation.
 - Définir des recommandations de secours pour les utilisateurs sans historique afin d'éviter les scénarios de démarrage à froid.
 
+<div align="center">
+  <img src="../images/calculation-automation-flowchart.png" alt="Photo du Flowchart de l'Automatisation des Calculs" width="300">
+  <h4>Diagramme 2: Flowchart de l'Automatisation des Calculs</h4>
+</div>
+
 ---
 
 ### Étape 7
@@ -378,3 +388,8 @@ Pour garantir une précision à long terme et une adaptation aux préférences d
 - Mettre en place un mécanisme de restauration permettant de revenir au modèle précédent si le nouveau modèle ne satisfait pas aux seuils de performance en production. Cela prévient les problèmes potentiels d'expérience utilisateur dus à des recommandations de faible qualité.
 - Ajouter des portes de validation automatiques et une stratégie de déploiement progressif (rollout) pour assurer une transition en douceur vers les nouveaux modèles.
 - Tester les performances de régression pour garantir que les changements de modèle ne détériorent pas les performances globales.
+
+<div align="center">
+  <img src="../images/model-retraining-workflow.png" alt="Photo du Workflow de l'Automatisation du Réentraînement du Modèle" width="300">
+  <h4>Diagramme 3: Workflow de l'Automatisation du Réentraînement du Modèle</h4>
+</div>
