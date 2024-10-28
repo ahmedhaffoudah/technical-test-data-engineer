@@ -122,6 +122,26 @@ Pour exécuter le pipeline de données et récupérer les données nécessaires,
 
 ---
 
+### Instruction 5 : Exécuter les Tests du Pipeline de Données
+
+1. **Ouvrir un Nouveau Terminal et Accéder au Répertoire du Projet :**
+
+   - Ouvrez un nouveau terminal et accédez au répertoire principal de votre projet :
+     ```bash
+     cd /chemin/vers/votre/projet
+     ```
+
+2. **Lancer les Tests avec Pytest :**
+
+   - Exécutez les tests en utilisant la commande suivante :
+     ```bash
+     python -m pytest tests/test_data_pipeline.py
+     ```
+   - Cette commande lancera tous les tests dans le fichier `test_data_pipeline.py` et affichera les résultats pour chaque cas de test.
+
+3. **Vérifier les Résultats des Tests :**
+   - Pytest affichera un rapport indiquant quels tests ont réussi ou échoué, permettant d'identifier les parties du pipeline à ajuster en cas de problème.
+
 ## Questions (étapes 4 à 7)
 
 ### Étape 4
