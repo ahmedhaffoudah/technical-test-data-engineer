@@ -1,54 +1,95 @@
-import sys
-import os
 import pytest
-import json
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, mock_open
+from requests.exceptions import RequestException
+from data_pipeline import DataPipeline
 
-# Add the root directory to the path for importing data_pipeline.py
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from data_pipeline import fetch_data, save_data
+@pytest.fixture
+def pipeline():
+    return DataPipeline()
 
-# Test for API Data Retrieval
-@patch("data_pipeline.requests.get")
-def test_fetch_data(mock_get):
-    # Mock response for successful data retrieval
+@pytest.fixture
+def sample_data():
+    return [{"id": 1, "name": "test"}]
+
+# Test successful data fetching
+@patch("requests.Session.get")
+def test_fetch_data_success(mock_get, pipeline, sample_data):
     mock_response = Mock()
     mock_response.status_code = 200
-    mock_response.json.return_value = [{"id": 1, "name": "sample track"}]  # Example response
+    mock_response.json.return_value = sample_data
     mock_get.return_value = mock_response
-
-    data = fetch_data("tracks")
-    assert isinstance(data, list)
-    assert len(data) > 0
-    assert data[0]["name"] == "sample track"
-
-    # Mock response for an empty response
-    mock_response.json.return_value = []
-    data = fetch_data("tracks")
-    assert data == []
-
-# Test for Data Saving
-def test_save_data():
-    sample_data = {"sample": "data"}
-    save_data(sample_data, "test_data")
-
-    # Check that the file is created
-    files = [f for f in os.listdir("data") if f.startswith("test_data")]
-    assert len(files) > 0
-
-    # Validate file content
-    with open(os.path.join("data", files[0]), "r") as f:
-        data = json.load(f)
+    
+    data = pipeline.fetch_data("tracks")
     assert data == sample_data
+    mock_get.assert_called_once_with("http://127.0.0.1:8000/tracks")
 
-    # Clean up after test
-    for f in files:
-        os.remove(os.path.join("data", f))
+# Test network error handling
+@patch("requests.Session.get")
+def test_fetch_data_network_error(mock_get, pipeline):
+    mock_get.side_effect = RequestException("Network error")
+    
+    with pytest.raises(RequestException, match="Network error"):
+        pipeline.fetch_data("tracks")
 
-# Test for Error Handling in fetch_data
-@patch("data_pipeline.requests.get")
-def test_fetch_data_error_handling(mock_get):
-    # Simulate a failed request
-    mock_get.side_effect = Exception("API error")
-    with pytest.raises(Exception, match="API error"):
-        fetch_data("invalid_endpoint")
+# Test invalid JSON response
+@patch("requests.Session.get")
+def test_fetch_data_invalid_json(mock_get, pipeline):
+    mock_response = Mock()
+    mock_response.json.side_effect = ValueError("Invalid JSON")
+    mock_get.return_value = mock_response
+    
+    with pytest.raises(ValueError, match="Invalid JSON"):
+        pipeline.fetch_data("tracks")
+
+# Test unexpected response format
+@patch("requests.Session.get")
+def test_fetch_data_unexpected_format(mock_get, pipeline):
+    mock_response = Mock()
+    mock_response.json.return_value = "not a list or dict"
+    mock_get.return_value = mock_response
+    
+    with pytest.raises(ValueError, match="Unexpected data format"):
+        pipeline.fetch_data("tracks")
+
+# Test successful data saving with mock for file size
+@patch("builtins.open", new_callable=mock_open)
+@patch("os.path.getsize", return_value=100)  # Mock getsize to return a dummy file size
+def test_save_data_success(mock_getsize, mock_file, pipeline, sample_data):
+    filepath = pipeline.save_data(sample_data, "test")
+    assert "test_" in filepath
+    assert filepath.endswith(".json")
+    mock_file.assert_called_once()
+
+# Test non-serializable data
+def test_save_data_non_serializable(pipeline):
+    non_serializable_data = {"key": object()}
+    
+    with pytest.raises(TypeError):
+        pipeline.save_data(non_serializable_data, "test")
+
+# Test file write error
+@patch("builtins.open", side_effect=IOError("Write error"))
+def test_save_data_write_error(mock_file, pipeline, sample_data):
+    with pytest.raises(IOError, match="Write error"):
+        pipeline.save_data(sample_data, "test")
+
+# Test complete pipeline execution
+@patch("data_pipeline.DataPipeline.fetch_data")
+@patch("data_pipeline.DataPipeline.save_data")
+def test_run_pipeline_success(mock_save, mock_fetch, pipeline, sample_data):
+    mock_fetch.return_value = sample_data
+    mock_save.return_value = "test_file.json"
+    
+    results = pipeline.run_pipeline()
+    assert len(results) == 3
+    assert all(isinstance(v, str) for v in results.values())
+    assert mock_fetch.call_count == 3
+    assert mock_save.call_count == 3
+
+# Test pipeline error handling
+@patch("data_pipeline.DataPipeline.fetch_data")
+def test_run_pipeline_error(mock_fetch, pipeline):
+    mock_fetch.side_effect = Exception("Pipeline error")
+    
+    with pytest.raises(Exception, match="Pipeline error"):
+        pipeline.run_pipeline()
